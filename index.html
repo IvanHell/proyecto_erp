@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Ventas — Prototipo v8</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+    <h1>Panel de Ventas — Prototipo v8</h1>
+    <div class="sub">Cotización multi-ítem (Kit + Individual) bajo el mismo folio · Folio siempre primero</div>
+</header>
+
+<div class="wrap">
+<div class="tabs">
+    <button class="active" data-tab="cot">Cotizaciones</button>
+    <button data-tab="esp">Especificaciones</button>
+    <button data-tab="pp">PP</button>
+    <button data-tab="pt">PT</button>
+    <button data-tab="mp">MP — Láminas</button>
+</div>
+
+<div class="panel" id="panel"></div>
+
+<!-- ===================== MODAL COTIZACIÓN (MULTI-ÍTEM) ===================== -->
+<div class="modal-bg" id="modalCot">
+    <div class="modal">
+        <h2 id="cot_title">Nueva Cotización</h2>
+        <div class="sub">Un folio puede contener varios ítems (Kits e Individuales)</div>
+
+        <!-- FOLIO PRIMERO, DESTACADO -->
+        <div class="folio-destacado">
+            <div>
+                <div class="label">FOLIO</div>
+                <div class="valor" id="c_folio_valor">FOL-0001</div>
+            </div>
+            <div class="auto">Autogenerado — no editable</div>
+            <input type="hidden" id="c_folio">
+        </div>
+
+        <!-- DATOS GENERALES -->
+        <div class="cot-head">
+            <div class="grid">
+                <label>Cliente<input id="c_cli"></label>
+                <label>Proyecto (= Código)<input id="c_pro"></label>
+                <label>Descripción general<input id="c_desc"></label>
+            </div>
+        </div>
+
+        <!-- ÍTEMS -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <b style="font-size:13px">Ítems de la cotización <span class="muted" id="cot_items_count">(0)</span></b>
+        </div>
+
+        <div class="selector-tipo">
+            <button onclick="addItemCot('individual')">+ Agregar Número Individual</button>
+            <button class="kit-btn" onclick="addItemCot('kit')">+ Agregar Kit</button>
+        </div>
+
+        <div id="cot_items_container"></div>
+
+        <div class="modal-footer">
+            <button class="btn sec" onclick="closeModal('modalCot')">Cancelar</button>
+            <button class="btn" onclick="saveCot()">Guardar Cotización</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- ===================== MODAL SELECTOR TIPO ESPECIFICACIÓN ===================== -->
+<div class="modal-bg" id="modalEspTipo">
+    <div class="modal" style="max-width:520px">
+        <h2>Nueva Especificación</h2>
+        <div class="sub">Selecciona el tipo de número de parte</div>
+        <div class="grid" style="grid-template-columns:1fr">
+            <button class="btn" style="text-align:left" onclick="openEspForm('individual')">📄 Número Individual</button>
+            <button class="btn rejilla" style="text-align:left" onclick="openEspForm('rejilla')">🧩 Rejilla (segmentada A/B/C)</button>
+            <button class="btn kit" style="text-align:left" onclick="openEspForm('kit')">📦 Kit (Ficha principal + hijas)</button>
+        </div>
+        <div class="modal-footer">
+            <button class="btn sec" onclick="closeModal('modalEspTipo')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL FICHA TÉCNICA ===================== -->
+<div class="modal-bg" id="modalEsp">
+    <div class="modal">
+        <h2 id="e_title">Ficha Técnica</h2>
+        <div class="sub" id="e_sub">Completa los datos estándar</div>
+
+        <div class="ficha-principal" id="ficha_principal_block">
+            <h3>
+                <span id="fp_titulo">Ficha principal</span>
+                <span id="fp_acciones_kit" style="display:none">
+                    <span class="badge-tipo caja" id="fp_badge">CAJA</span>
+                    <button class="btn rejilla" style="padding:4px 10px;font-size:11px"
+                            onclick="convertirPrincipalRejilla()">
+                        🔄 Convertir en Rejilla
+                    </button>
+                </span>
+            </h3>
+
+            <div class="grid">
+                <label>Folio heredado
+                    <select id="e_folio"></select>
+                </label>
+                <label>N_Interno<input id="e_ni"></label>
+                <label>Cliente<input id="e_cli"></label>
+                <label>N_Externo<input id="e_ne"></label>
+                <label>Nombre<input id="e_nom"></label>
+                <label>Proyecto (editable)<input id="e_pro"></label>
+                <label>Largo<input id="e_lar" type="number" step="0.1"></label>
+                <label>Ancho<input id="e_anc" type="number" step="0.1"></label>
+                <label>Alto<input id="e_alt" type="number" step="0.1"></label>
+                <label>ECT
+                    <select id="e_ect">
+                        <option value="">— Seleccionar —</option>
+                        <option value="ECT-32">ECT-32</option>
+                        <option value="ECT-42">ECT-42</option>
+                        <option value="ECT-80">ECT-80</option>
+                    </select>
+                </label>
+                <label>Corrugado (auto)<input id="e_cor" readonly></label>
+                <label>Medida (m²)<input id="e_med"></label>
+                <label>Código<input id="e_cod"></label>
+                <label>Dirección (URL)<input id="e_dir" placeholder="https://..."></label>
+            </div>
+
+            <div id="sec_rejilla" style="display:none;margin-top:14px">
+                <div class="sub" style="font-weight:600;color:#9f1239">
+                    Fórmula: Parte "A" × X  +  Parte "B" × Y  =  1 número de parte
+                </div>
+                <div id="partes_container"></div>
+                <button class="btn sec" style="margin-top:8px" onclick="addParte()">+ Agregar parte</button>
+                <div class="muted" style="margin-top:6px">
+                    Sufijos con <b>N_Externo</b>: <span id="prefijo_rejilla">—</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec_kit" style="display:none">
+            <div class="sub" style="font-weight:600;color:#6b21a8;margin-bottom:10px">
+                Fichas hijas del Kit
+            </div>
+            <div id="hijas_container"></div>
+            <button class="btn sec" style="margin-top:8px" onclick="addHija()">+ Agregar ficha hija</button>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn sec" onclick="closeModal('modalEsp')">Cancelar</button>
+            <button class="btn" onclick="saveEsp()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL PIN ===================== -->
+<div class="modal-bg" id="modalPin">
+    <div class="modal" style="max-width:360px">
+        <h2>Editar Especificación</h2>
+        <div class="sub">Introduce el PIN de edición</div>
+        <div class="pin-box">
+            <input id="pin_input" type="password" maxlength="4" placeholder="••••">
+            <button class="btn" onclick="checkPin()">Validar</button>
+        </div>
+        <div id="pin_error" class="muted" style="color:#dc2626;margin-top:8px;display:none">
+            PIN incorrecto
+        </div>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
