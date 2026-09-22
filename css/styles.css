@@ -696,3 +696,181 @@ footer {
     .grid { grid-template-columns: 1fr; }
     .parte-row { grid-template-columns: 60px 80px 1fr 34px; }
 }
+
+/* ===== GRUPOS DE COTIZACIÓN ===== */
+.grupo-cot {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+}
+.grupo-cot.es-kit { border-left-color: #7c3aed; }
+.grupo-cot.es-individual { border-left-color: var(--accent); }
+
+.grupo-cot .grupo-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.grupo-cot .grupo-head .num {
+    background: var(--ink);
+    color: #fff;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold;
+}
+.grupo-cot .grupo-head .tipo-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.grupo-cot .grupo-head .tipo-badge.kit {
+    background: #f3e8ff; color: #6b21a8;
+}
+.grupo-cot .grupo-head .tipo-badge.individual {
+    background: #dbeafe; color: #1e40af;
+}
+.grupo-cot .grupo-head .grupo-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+
+.grupo-cot .grupo-code-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.grupo-cot .grupo-code-input label {
+    font-size: 11.5px;
+    color: var(--sub);
+    margin: 0;
+    white-space: nowrap;
+}
+.grupo-cot .grupo-code-input input {
+    flex: 1;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.componentes-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 6px;
+}
+.componentes-table th {
+    background: #f8f9fb;
+    border: 1px solid var(--line);
+    padding: 5px 6px;
+    font-size: 11px;
+    color: var(--sub);
+}
+.componentes-table td {
+    border: 1px solid var(--line);
+    padding: 4px;
+}
+.componentes-table input,
+.componentes-table select {
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+}
+.componentes-table input[readonly] {
+    background: #f8f9fb;
+    color: var(--sub);
+}
+.componentes-table .col-chica { width: 60px; }
+.componentes-table .col-med   { width: 80px; }
+.componentes-table .col-precio { width: 90px; }
+
+.grupo-subtotal {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+}
+.grupo-subtotal label {
+    font-size: 11.5px;
+    color: var(--sub);
+    margin: 0;
+}
+.grupo-subtotal input {
+    width: 100px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: right;
+}
+.grupo-subtotal .auto-total {
+    background: #fef3c7;
+    color: #78350f;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+}
+
+/* Vista guardada de grupos */
+.grupo-vista {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: #f8f9fb;
+    border-left: 4px solid var(--accent);
+}
+.grupo-vista.es-kit { border-left-color: #7c3aed; }
+
+.grupo-vista .grupo-vista-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.grupo-vista .grupo-vista-head .tipo-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.grupo-vista .grupo-vista-head .tipo-badge.kit {
+    background: #f3e8ff; color: #6b21a8;
+}
+.grupo-vista .grupo-vista-head .tipo-badge.individual {
+    background: #dbeafe; color: #1e40af;
+}
+.grupo-vista .grupo-vista-head .code {
+    font-weight: bold;
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.grupo-vista .subtotal-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: bold;
+    color: var(--warn);
+}
