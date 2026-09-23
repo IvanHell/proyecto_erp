@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Ventas — v9</title>
+    <title>Panel de Ventas — v10</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <header>
-    <h1>Panel de Ventas — v9</h1>
-    <p>Cotización multi-grupo (Kit + Individual) · Especificaciones · Almacenes MP / PP / PT</p>
+    <h1>Panel de Ventas — v10</h1>
+    <p>Cotización y Especificación multi-grupo (Kit + Individual) · Almacenes MP / PP / PT</p>
 </header>
 
 <div class="wrap">
@@ -36,7 +36,6 @@
         <h2 id="cot_title">Nueva Cotización</h2>
         <div class="sub">Un folio puede contener varios grupos (Kits e Individuales)</div>
 
-        <!-- FOLIO DESTACADO -->
         <div class="folio-destacado">
             <div>
                 <div class="label">FOLIO</div>
@@ -46,7 +45,6 @@
             <input type="hidden" id="c_folio">
         </div>
 
-        <!-- DATOS GENERALES -->
         <div class="cot-head">
             <div class="grid">
                 <label>Cliente<input id="c_cli"></label>
@@ -55,7 +53,6 @@
             </div>
         </div>
 
-        <!-- GRUPOS -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
             <b style="font-size:13px">Grupos de la cotización <span class="muted" id="cot_items_count">(0)</span></b>
         </div>
@@ -73,89 +70,25 @@
     </div>
 </div>
 
-<!-- ===================== MODAL SELECTOR TIPO ESPECIFICACIÓN ===================== -->
-<div class="modal-bg" id="modalEspTipo">
-    <div class="modal" style="max-width:520px">
-        <h2>Nueva Especificación</h2>
-        <div class="sub">Selecciona el tipo de número de parte</div>
-        <div class="grid" style="grid-template-columns:1fr">
-            <button class="btn" style="text-align:left" onclick="openEspForm('individual')">📄 Número Individual</button>
-            <button class="btn" style="text-align:left;background:#be123c;color:#fff;border:none" onclick="openEspForm('rejilla')">🧩 Rejilla (segmentada A/B/C)</button>
-            <button class="btn" style="text-align:left;background:#7c3aed;color:#fff;border:none" onclick="openEspForm('kit')">📦 Kit (Ficha principal + hijas)</button>
-        </div>
-        <div class="modal-footer">
-            <button class="btn secondary" onclick="closeModal('modalEspTipo')">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<!-- ===================== MODAL FICHA TÉCNICA ===================== -->
+<!-- ===================== MODAL ESPECIFICACIÓN (GRUPOS) ===================== -->
 <div class="modal-bg" id="modalEsp">
     <div class="modal">
-        <h2 id="e_title">Ficha Técnica</h2>
-        <div class="sub" id="e_sub">Completa los datos estándar</div>
+        <h2 id="esp_title">Nueva Especificación</h2>
+        <div class="sub">Un grupo con 1 ficha = Individual · 2+ fichas = Kit</div>
 
-        <div class="ficha-principal" id="ficha_principal_block">
-            <h3>
-                <span id="fp_titulo">Ficha principal</span>
-                <span id="fp_acciones_kit" style="display:none">
-                    <span class="badge-tipo caja" id="fp_badge">CAJA</span>
-                    <button class="btn secondary small" onclick="convertirPrincipalRejilla()">🔄 Convertir en Rejilla</button>
-                </span>
-            </h3>
-
-            <div class="grid">
-                <label>Folio heredado
-                    <select id="e_folio"></select>
-                </label>
-                <label>N_Interno<input id="e_ni"></label>
-                <label>Cliente<input id="e_cli"></label>
-                <label>N_Externo<input id="e_ne"></label>
-                <label>Nombre
-                    <input id="e_nom" list="nombre-options" placeholder="CAJA / REJILLA / SEPARADOR…">
-                </label>
-                <label>Proyecto (editable)<input id="e_pro"></label>
-                <label>Largo<input id="e_lar" type="number" step="0.1"></label>
-                <label>Ancho<input id="e_anc" type="number" step="0.1"></label>
-                <label>Alto<input id="e_alt" type="number" step="0.1"></label>
-                <label>ECT
-                    <select id="e_ect">
-                        <option value="">— Seleccionar —</option>
-                        <option value="ECT-26">ECT-26</option>
-                        <option value="ECT-32">ECT-32</option>
-                        <option value="ECT-42">ECT-42</option>
-                        <option value="ECT-80">ECT-80</option>
-                    </select>
-                </label>
-                <label>Corrugado (auto)<input id="e_cor" readonly></label>
-                <label>Medida (m²)<input id="e_med"></label>
-                <label>Código<input id="e_cod"></label>
-                <label>Dirección (URL)<input id="e_dir" placeholder="https://..."></label>
-            </div>
-
-            <div id="sec_rejilla" style="display:none;margin-top:14px">
-                <div class="sub" style="font-weight:600;color:#9f1239">
-                    Fórmula: Parte "A" × X  +  Parte "B" × Y  =  1 número de parte
-                </div>
-                <div id="partes_container"></div>
-                <button class="btn secondary small" style="margin-top:8px" onclick="addParte()">+ Agregar parte</button>
-                <div class="muted" style="margin-top:6px">
-                    Sufijos con <b>N_Externo</b>: <span id="prefijo_rejilla">—</span>
-                </div>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <b style="font-size:13px">Grupos de la especificación <span class="muted" id="esp_items_count">(0)</span></b>
         </div>
 
-        <div id="sec_kit" style="display:none">
-            <div class="sub" style="font-weight:600;color:#6b21a8;margin-bottom:10px">
-                Fichas hijas del Kit <span class="muted">(mínimo 1 — el Kit es 2+ elementos contando la principal)</span>
-            </div>
-            <div id="hijas_container"></div>
-            <button class="btn secondary small" style="margin-top:8px" onclick="addHija()">+ Agregar ficha hija</button>
+        <div class="selector-tipo">
+            <button onclick="addGrupoEsp()">+ Nuevo Grupo</button>
         </div>
+
+        <div id="esp_items_container"></div>
 
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalEsp')">Cancelar</button>
-            <button class="btn" onclick="saveEsp()">Guardar</button>
+            <button class="btn" onclick="saveEsp()">Guardar Especificación</button>
         </div>
     </div>
 </div>
@@ -172,6 +105,9 @@
         <div id="pin_error" class="muted" style="color:#dc2626;margin-top:8px;display:none">
             PIN incorrecto
         </div>
+        <div class="modal-footer">
+            <button class="btn secondary" onclick="closeModal('modalPin')">Cancelar</button>
+        </div>
     </div>
 </div>
 
@@ -181,6 +117,8 @@
     <option value="CAJA CON FONDO">
     <option value="HSC Box">
     <option value="REJILLA">
+    <option value="REJILLA A">
+    <option value="REJILLA B">
     <option value="SEPARADOR">
     <option value="15 Cell Partition">
     <option value="Common Cover">

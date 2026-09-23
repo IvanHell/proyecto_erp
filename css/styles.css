@@ -424,6 +424,12 @@ td.left {
     padding-top: 14px;
 }
 
+#modalPin .modal-footer {
+    justify-content: flex-end;
+    margin-top: 14px;
+    padding-top: 12px;
+}
+
 /* ===== FICHA PRINCIPAL ===== */
 .ficha-principal {
     border: 2px solid var(--accent);
@@ -689,6 +695,7 @@ footer {
     font-size: 0.9rem;
 }
 
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
     .wrap { padding: 12px; }
@@ -874,3 +881,235 @@ footer {
     font-weight: bold;
     color: var(--warn);
 }
+
+/* ===== GRUPOS DE ESPECIFICACIÓN (reutiliza estructura de Cotización) ===== */
+.grupo-esp {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    background: #fff;
+    border-left: 4px solid var(--accent);
+}
+.grupo-esp.es-kit { border-left-color: #7c3aed; }
+.grupo-esp.es-individual { border-left-color: var(--accent); }
+
+.grupo-esp .grupo-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.grupo-esp .grupo-head .num {
+    background: var(--ink);
+    color: #fff;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold;
+}
+.grupo-esp .grupo-head .tipo-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.grupo-esp .grupo-head .tipo-badge.kit {
+    background: #f3e8ff; color: #6b21a8;
+}
+.grupo-esp .grupo-head .tipo-badge.individual {
+    background: #dbeafe; color: #1e40af;
+}
+.grupo-esp .grupo-head .grupo-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+
+/* Encabezado del grupo: Folio + Proyecto */
+.grupo-esp .grupo-headers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.grupo-esp .grupo-headers label {
+    font-size: 11.5px;
+    color: var(--sub);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.grupo-esp .grupo-headers input,
+.grupo-esp .grupo-headers select {
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: bold;
+}
+
+/* Tabla de fichas */
+.fichas-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 6px;
+}
+.fichas-table th {
+    background: #f8f9fb;
+    border: 1px solid var(--line);
+    padding: 5px 6px;
+    font-size: 11px;
+    color: var(--sub);
+    white-space: nowrap;
+}
+.fichas-table td {
+    border: 1px solid var(--line);
+    padding: 4px;
+}
+.fichas-table input,
+.fichas-table select {
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: inherit;
+    min-width: 60px;
+}
+.fichas-table input[readonly] {
+    background: #f8f9fb;
+    color: var(--sub);
+}
+.fichas-table .col-num { width: 32px; text-align: center; }
+.fichas-table .col-chica { width: 70px; }
+.fichas-table .col-med { width: 90px; }
+.fichas-table .col-ect { width: 90px; }
+.fichas-table .col-cor { width: 80px; }
+.fichas-table .col-medida { width: 70px; }
+.fichas-table .col-cod { width: 100px; }
+.fichas-table .col-url { width: 140px; }
+.fichas-table .col-acciones { width: 90px; }
+
+/* Sub-tabla de partes A/B/C */
+.partes-wrap {
+    background: #fff1f2;
+    border: 1px dashed #be123c;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 6px;
+}
+.partes-wrap .partes-titulo {
+    font-size: 11px;
+    font-weight: bold;
+    color: #9f1239;
+    margin-bottom: 6px;
+}
+.partes-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+.partes-wrap th {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    padding: 3px 5px;
+    font-size: 10px;
+    color: #9f1239;
+}
+.partes-wrap td {
+    border: 1px solid #fecaca;
+    padding: 3px 4px;
+    background: #fff;
+}
+.partes-wrap input {
+    padding: 3px 5px;
+    font-size: 11px;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    width: 100%;
+}
+.partes-wrap .btn-mini {
+    padding: 2px 6px;
+    font-size: 11px;
+    background: #fff;
+    color: #be123c;
+    border: 1px solid #be123c;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Vista guardada de grupos de especificación */
+.grupo-esp-vista {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: #f8f9fb;
+    border-left: 4px solid var(--accent);
+}
+.grupo-esp-vista.es-kit { border-left-color: #7c3aed; }
+
+.grupo-esp-vista .grupo-vista-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+.grupo-esp-vista .grupo-vista-head .tipo-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+.grupo-esp-vista .grupo-vista-head .tipo-badge.kit {
+    background: #f3e8ff; color: #6b21a8;
+}
+.grupo-esp-vista .grupo-vista-head .tipo-badge.individual {
+    background: #dbeafe; color: #1e40af;
+}
+.grupo-esp-vista .grupo-vista-head .code {
+    font-weight: bold;
+    color: var(--ink);
+    font-size: 13px;
+}
+
+/* Pega esto al final de styles.css */
+
+/* Modal especificación más ancho para la tabla grande */
+#modalEsp .modal {
+    max-width: 1200px;
+}
+
+/* Contenedor de fichas con scroll si hace falta */
+.grupo-esp .tablewrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    max-height: none;
+}
+
+/* Columnas más compactas */
+.fichas-table .col-num      { width: 28px; }
+.fichas-table .col-chica    { width: 60px; }
+.fichas-table .col-med      { width: 70px; }
+.fichas-table .col-ect      { width: 80px; }
+.fichas-table .col-cor      { width: 70px; }
+.fichas-table .col-medida   { width: 65px; }
+.fichas-table .col-cod      { width: 95px; }
+.fichas-table .col-url      { width: 130px; }
+.fichas-table .col-acciones { width: 70px; }
+
+.fichas-table input,
+.fichas-table select {
+    padding: 4px 5px;
+    font-size: 11.5px;
+    min-width: 0;
+}
+
