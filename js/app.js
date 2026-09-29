@@ -39,6 +39,7 @@ const DB = {
             grupos: [
                 {
                     proyecto: "CRV FR/AR",
+                    cliente: "Motus León",
                     fichas: [
                         { nInterno: "3763224", cliente: "Motus León", nExterno: "1500820X",
                           nombre: "CAJA CON FONDO", largo: 60.5, ancho: 38, alto: 72,
@@ -177,7 +178,7 @@ function renderEspCard(e, i) {
             <div class="grupo-esp-vista ${tipo === 'kit' ? 'es-kit' : ''}">
                 <div class="grupo-vista-head">
                     <span class="tipo-badge ${tipo}">${tipo === 'kit' ? '🧩 KIT' : '📄 INDIVIDUAL'}</span>
-                    <span class="code">Proyecto: ${g.proyecto || "—"}</span>
+                    <span class="code">${g.cliente || "—"} · Proyecto: ${g.proyecto || "—"}</span>
                 </div>
                 <div class="tablewrap">
                     <table>
@@ -368,7 +369,7 @@ function addComponenteGrupo(btn, data) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td class="col-chica">${tbody.children.length + 1}</td>
-        <td><input class="comp-desc" list="nombre-options" value="${data?.desc || ''}" placeholder="HSC Box"></td>
+        <td><input class="comp-desc" list="nombre-options" value="${data?.desc || ''}" placeholder="CAJA / REJILLA..."></td>
         <td class="col-med"><input class="comp-lar" type="number" step="0.1" value="${data?.lar || ''}"></td>
         <td class="col-med"><input class="comp-anc" type="number" step="0.1" value="${data?.anc || ''}"></td>
         <td class="col-med"><input class="comp-alt" type="number" step="0.1" value="${data?.alt || ''}"></td>
@@ -486,14 +487,19 @@ function addGrupoEsp(data, folioHeredado) {
                 <button class="btn danger small" onclick="this.closest('.grupo-esp').remove(); updateItemsCount('esp');">🗑 Eliminar grupo</button>
             </div>
         </div>
-        <div class="grupo-headers">
-            <label>Folio heredado
-                <select class="grupo-folio" onchange="actualizarGrupoEsp(this)"></select>
-            </label>
-            <label>Proyecto
-                <input class="grupo-proyecto" value="${data?.proyecto || ''}" placeholder="Ej. CRV FR/AR" oninput="actualizarGrupoEsp(this)">
-            </label>
-        </div>
+
+<div class="grupo-headers"> 
+        <label>Folio heredado
+        <select class="grupo-folio" onchange="onFolioChangeEsp(this)"></select>
+        </label>
+         <label>Cliente
+        <input class="grupo-cliente" value="${data?.cliente || ''}" placeholder="Ej. Motus León" oninput="actualizarGrupoEsp(this)">
+        </label>
+        <label>Proyecto
+        <input class="grupo-proyecto" value="${data?.proyecto || ''}" placeholder="Ej. CRV FR/AR" oninput="actualizarGrupoEsp(this)">
+    </label>
+</div>
+
         <div class="tablewrap" style="max-height:none;overflow:visible;border:none;">
             <table class="fichas-table">
                 <thead><tr>
@@ -527,6 +533,7 @@ function addGrupoEsp(data, folioHeredado) {
 
     actualizarGrupoEsp(div);
     updateItemsCount("esp");
+
 }
 
 function addFichaEsp(btn, data) {
@@ -685,6 +692,39 @@ function actualizarGrupoEsp(el) {
     });
 }
 
+/* Al cambiar el folio, autocompleta Cliente y Proyecto (editables) */
+function onFolioChangeEsp(selectEl) {
+    const grupo = selectEl.closest('.grupo-esp');
+    const folioSeleccionado = selectEl.value;
+
+    if (!folioSeleccionado) {
+        // No hay folio → no hacemos nada, el usuario captura manual
+        actualizarGrupoEsp(selectEl);
+        return;
+    }
+
+    // Buscar la cotización por folio
+    const cot = DB.cotizaciones.find(c => c.folio === folioSeleccionado);
+    if (!cot) {
+        actualizarGrupoEsp(selectEl);
+        return;
+    }
+
+    // Autocompletar Cliente y Proyecto
+    const clienteInput = grupo.querySelector('.grupo-cliente');
+    const proyectoInput = grupo.querySelector('.grupo-proyecto');
+
+    // Solo autocompletar si están vacíos (respetar lo que el usuario haya escrito)
+    if (!clienteInput.value.trim()) {
+        clienteInput.value = cot.cli || '';
+    }
+    if (!proyectoInput.value.trim()) {
+        proyectoInput.value = cot.pro || '';
+    }
+
+    actualizarGrupoEsp(selectEl);
+}
+
 function updateItemsCount(prefix) {
     const contId = prefix === "cot" ? "cot_items_container" : "esp_items_container";
     const countId = prefix === "cot" ? "cot_items_count" : "esp_items_count";
@@ -694,15 +734,17 @@ function updateItemsCount(prefix) {
 }
 
 function saveEsp() {
-    const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")].map(g => {
-        const folio = g.querySelector('.grupo-folio').value;
-        const proyecto = g.querySelector('.grupo-proyecto').value;
+const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")].map(g => {
+    const folio = g.querySelector('.grupo-folio').value;
+    const cliente = g.querySelector('.grupo-cliente').value;
+    const proyecto = g.querySelector('.grupo-proyecto').value;
 
-        const fichas = [...g.querySelectorAll('.fichas-body tr.ficha-tr')].map(tr => {
-            const f = {
-                nInterno: tr.querySelector('.f-ni').value,
-                cliente: "",
-                nExterno: tr.querySelector('.f-ne').value,
+    const fichas = [...g.querySelectorAll('.fichas-body tr.ficha-tr')].map(tr => {
+        const f = {
+            nInterno: tr.querySelector('.f-ni').value,
+            cliente: cliente,  // ← heredado del grupo
+            nExterno: tr.querySelector('.f-ne').value,
+
                 nombre: tr.querySelector('.f-nom').value,
                 largo: +tr.querySelector('.f-lar').value,
                 ancho: +tr.querySelector('.f-anc').value,
@@ -725,14 +767,16 @@ function saveEsp() {
             return f;
         }).filter(f => f.nInterno || f.nombre);
 
-        return { folio, proyecto, fichas };
+        return { folio, cliente ,proyecto, fichas };
     }).filter(g => g.fichas.length > 0);
 
     // Validaciones
     if (grupos.length === 0) { alert("Agrega al menos 1 grupo con 1 ficha"); return; }
     for (const g of grupos) {
         if (!g.folio) { alert("Cada grupo debe tener folio heredado"); return; }
+        if (!g.cliente) {alert("Cada grupo debe tener cliente");return;}
         if (!g.proyecto) { alert("Cada grupo debe tener proyecto"); return; }
+
     }
 
     const e = {
@@ -804,3 +848,4 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.openPin = openPin;
 window.checkPin = checkPin;
+window.onFolioChangeEsp = onFolioChangeEsp;
