@@ -3,29 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Ventas — v10</title>
+    <title>Panel de Ventas — v11</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <header>
-    <h1>Panel de Ventas — v10</h1>
-    <p>Cotización y Especificación multi-grupo (Kit + Individual) · Almacenes MP / PP / PT</p>
+    <h1>Panel de Ventas — v11</h1>
+    <p>Cotización · Especificación · Requerimientos · Almacenes MP / PP / PT</p>
 </header>
 
 <div class="wrap">
 
-    <!-- ===================== TABS ===================== -->
     <div class="tabs">
         <button class="tab-btn active" data-tab="cot">📥 Cotizaciones</button>
         <button class="tab-btn" data-tab="esp">📋 Especificaciones</button>
+        <button class="tab-btn" data-tab="req">📨 Requerimientos</button>
         <button class="tab-btn" data-tab="pp">📦 PP</button>
         <button class="tab-btn" data-tab="pt">📦 PT</button>
         <button class="tab-btn" data-tab="mp">🧱 MP — Láminas</button>
     </div>
 
-    <!-- ===================== PANEL ===================== -->
     <div class="panel active" id="panel"></div>
 
 </div>
@@ -70,7 +69,7 @@
     </div>
 </div>
 
-<!-- ===================== MODAL ESPECIFICACIÓN (GRUPOS) ===================== -->
+<!-- ===================== MODAL ESPECIFICACIÓN ===================== -->
 <div class="modal-bg" id="modalEsp">
     <div class="modal">
         <h2 id="esp_title">Nueva Especificación</h2>
@@ -93,6 +92,87 @@
     </div>
 </div>
 
+<!-- ===================== MODAL REQUERIMIENTO ===================== -->
+<div class="modal-bg" id="modalReq">
+    <div class="modal">
+        <h2 id="req_title">Nuevo Requerimiento</h2>
+        <div class="sub">Lo que Servicio a Cliente solicita a PT</div>
+
+        <div class="folio-destacado">
+            <div>
+                <div class="label">N° REQUERIMIENTO</div>
+                <div class="valor" id="r_folio_valor">REQ-0001</div>
+            </div>
+            <div class="auto">Autogenerado — no editable</div>
+            <input type="hidden" id="r_folio">
+        </div>
+
+        <div class="cot-head">
+            <div class="grid">
+                <label>Cliente
+                    <input id="r_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClienteReqChange()">
+                </label>
+                <label>Fecha<input type="date" id="r_fecha"></label>
+                <label>N° P.O. del cliente<input id="r_po" placeholder="PO-2026-001"></label>
+                <label>Customer Service<input id="r_cs"></label>
+                <label>Atención<input id="r_atn"></label>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <b style="font-size:13px">Líneas del requerimiento <span class="muted" id="req_items_count">(0)</span></b>
+        </div>
+
+        <div class="selector-tipo">
+            <button onclick="addLineaReq()">+ Nueva Línea</button>
+        </div>
+
+        <div id="req_items_container"></div>
+
+        <div class="cot-head" style="margin-top:14px">
+            <b style="font-size:12.5px;display:block;margin-bottom:8px">Footer informativo</b>
+            <div class="grid">
+                <label>% Cumplimiento<input id="r_cumplimiento" placeholder="Ej. 95"></label>
+                <label>Horario ventana con cliente<input id="r_horario_ventana"></label>
+                <label>Contacto de recibo<input id="r_contacto"></label>
+                <label>Firma de embarques<input id="r_firma_emb"></label>
+                <label>Firma de producto terminado<input id="r_firma_pt"></label>
+                <label>Horario de entrega<input id="r_horario_entrega"></label>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn secondary" onclick="closeModal('modalReq')">Cancelar</button>
+            <button class="btn" onclick="saveReq()">Guardar Requerimiento</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL P.O. ===================== -->
+<div class="modal-bg" id="modalPO">
+    <div class="modal" style="max-width:640px">
+        <h2 id="po_title">Nueva P.O.</h2>
+        <div class="sub">Orden de compra del cliente</div>
+
+        <div class="grid">
+            <label>Cliente
+                <input id="po_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClientePOChange()">
+            </label>
+            <label>N° P.O.<input id="po_num" placeholder="PO-2026-001"></label>
+            <label>Fecha<input type="date" id="po_fecha"></label>
+            <label>N_Parte
+                <select id="po_np"></select>
+            </label>
+            <label>Cantidad pedida<input type="number" id="po_cant" min="0"></label>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn secondary" onclick="closeModal('modalPO')">Cancelar</button>
+            <button class="btn" onclick="savePO()">Guardar P.O.</button>
+        </div>
+    </div>
+</div>
+
 <!-- ===================== MODAL PIN ===================== -->
 <div class="modal-bg" id="modalPin">
     <div class="modal" style="max-width:360px">
@@ -111,14 +191,21 @@
     </div>
 </div>
 
-<!-- Datalist de nombres frecuentes -->
 <datalist id="nombre-options">
-    <option value="CAJA NORMAL">
+    <option value="CAJA">
     <option value="CAJA CON FONDO">
+    <option value="HSC Box">
     <option value="REJILLA">
+    <option value="REJILLA A">
+    <option value="REJILLA B">
     <option value="SEPARADOR">
+    <option value="15 Cell Partition">
+    <option value="Common Cover">
     <option value="TAPA">
+    <option value="KIT">
 </datalist>
+
+<datalist id="clientes-options"></datalist>
 
 <script src="js/app.js"></script>
 </body>

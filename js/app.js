@@ -32,7 +32,6 @@ const DB = {
             ]
         }
     ],
-    // Especificaciones ahora con estructura de grupos
     especificaciones: [
         {
             folio: "FOL-0001",
@@ -44,19 +43,43 @@ const DB = {
                         { nInterno: "3763224", cliente: "Motus León", nExterno: "1500820X",
                           nombre: "CAJA CON FONDO", largo: 60.5, ancho: 38, alto: 72,
                           ect: "ECT-32", corrugado: "SENCILLO", medida: "1.84",
-                          codigo: "ESP-LMT-224", direccion: "https://drive.google.com/open?id=1wE3e8jh1q-33mAeX0j26_sr5gcPY9Zg1" },
+                          codigo: "ESP-LMT-224", direccion: "" },
                         { nInterno: "3763225", cliente: "Motus León", nExterno: "1500820X",
                           nombre: "REJILLA", largo: 59.5, ancho: 37, alto: 71.2,
                           ect: "ECT-32", corrugado: "SENCILLO", medida: "0.86",
-                          codigo: "ESP-LMT-225", direccion: "https://drive.google.com/file/d/1kUBooXBNHb05ZfrgY5X2pWux5xaFMTHb/view",
-                          partes: [
-                            { sufijo: "A", cantidad: 2 },
-                            { sufijo: "B", cantidad: 4 }
-                          ]
-                        }
+                          codigo: "ESP-LMT-225", direccion: "",
+                          partes: [{ sufijo: "A", cantidad: 2 }, { sufijo: "B", cantidad: 4 }] }
                     ]
                 }
             ]
+        }
+    ],
+    pos: [
+        { id: "po-1", cliente: "Motus León", numero: "PO-2026-001", fecha: "2026-02-20",
+          nInterno: "3763224", cantidad: 100 },
+        { id: "po-2", cliente: "Motus León", numero: "PO-2026-002", fecha: "2026-02-22",
+          nInterno: "3763225", cantidad: 250 }
+    ],
+    requerimientos: [
+        {
+            folio: "REQ-0001",
+            cliente: "Motus León",
+            fecha: "2026-02-26",
+            po: "PO-2026-001",
+            cs: "Angela Mendoza",
+            atencion: "Angela Mendoza",
+            lineas: [
+                { nInterno: "3763224", descripcion: "CAJA CON FONDO", cantidad: 30,
+                  po: "PO-2026-001", tipoDoc: "remision" }
+            ],
+            footer: {
+                cumplimiento: "",
+                horarioVentana: "",
+                contacto: "",
+                firmaEmb: "",
+                firmaPT: "",
+                horarioEntrega: ""
+            }
         }
     ],
     laminas: [
@@ -66,11 +89,25 @@ const DB = {
 
 /* ================= ESTADO ================= */
 let tab = "cot";
+let subReq = "req-lista";
 let espEditIndex = -1;
 let cotEditIndex = -1;
+let reqEditIndex = -1;
 
 /* ================= UTILIDADES ================= */
+
+function val(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+}
+
+function numval(id) {
+    const el = document.getElementById(id);
+    return el ? (Number(el.value) || 0) : 0;
+}
+
 function nextFolio() { return "FOL-" + String(DB.cotizaciones.length + 1).padStart(4, "0"); }
+function nextReqFolio() { return "REQ-" + String(DB.requerimientos.length + 1).padStart(4, "0"); }
 
 function fillFolios(selectEl, selected) {
     if (!selectEl) return;
@@ -86,14 +123,82 @@ function bindEctAuto(ect, cor) {
     ect.addEventListener("change", () => { cor.value = ECT_MAP[ect.value] || ""; });
 }
 
+/* ====== Aplanar fichas de especificación para consultas ====== */
+function todasLasFichas() {
+    const fichas = [];
+    DB.especificaciones.forEach(e => {
+        (e.grupos || []).forEach(g => {
+            (g.fichas || []).forEach(f => {
+                fichas.push({
+                    ...f,
+                    folio: e.folio,
+                    proyecto: g.proyecto,
+                    clienteGrupo: g.cliente
+                });
+            });
+        });
+    });
+    return fichas;
+}
+
+/* Clientes únicos (desde especificaciones) */
+function clientesUnicos() {
+    const set = new Set();
+    todasLasFichas().forEach(f => {
+        const c = (f.cliente || f.clienteGrupo || "").trim();
+        if (c) set.add(c);
+    });
+    return [...set].sort();
+}
+
+/* N_Partes de un cliente */
+function nPartesDeCliente(cliente) {
+    if (!cliente) return [];
+    return todasLasFichas().filter(f =>
+        (f.cliente || f.clienteGrupo || "").toLowerCase().trim() === cliente.toLowerCase().trim()
+    );
+}
+
+/* P.O.s de un cliente */
+function posDeCliente(cliente) {
+    if (!cliente) return DB.pos;
+    return DB.pos.filter(p => p.cliente.toLowerCase().trim() === cliente.toLowerCase().trim());
+}
+
+/* Saldo de una P.O. (cantidad pedida - suma en requerimientos) */
+function saldoPO(poId) {
+    const po = DB.pos.find(p => p.id === poId);
+    if (!po) return 0;
+    const usado = DB.requerimientos.reduce((s, r) =>
+        s + (r.lineas || []).filter(l => l.poId === poId).reduce((a, l) => a + (l.cantidad || 0), 0), 0
+    );
+    return po.cantidad - usado;
+}
+
+/* Busca la P.O. por número (fallback cuando no se guarda poId) */
+function poPorNumero(numero, cliente) {
+    return DB.pos.find(p =>
+        p.numero.toLowerCase().trim() === (numero || "").toLowerCase().trim() &&
+        (p.cliente || "").toLowerCase().trim() === (cliente || "").toLowerCase().trim()
+    );
+}
+
 /* ================= RENDER ================= */
 function render() {
     const panel = document.getElementById("panel");
     if (tab === "cot") renderCot(panel);
     if (tab === "esp") renderEsp(panel);
+    if (tab === "req") renderReq(panel);
     if (tab === "pp")  renderAlmacen(panel, "PP");
     if (tab === "pt")  renderAlmacen(panel, "PT");
     if (tab === "mp")  renderMP(panel);
+    refrescarDatalistClientes();
+}
+
+function refrescarDatalistClientes() {
+    const dl = document.getElementById("clientes-options");
+    if (!dl) return;
+    dl.innerHTML = clientesUnicos().map(c => `<option value="${c}">`).join("");
 }
 
 /* ================= COTIZACIONES ================= */
@@ -215,8 +320,130 @@ function renderEspCard(e, i) {
     </div>`;
 }
 
+/* ================= REQUERIMIENTOS ================= */
+function renderReq(panel) {
+    panel.innerHTML = `
+        <div class="subtabs">
+            <button class="subtab-btn ${subReq === 'req-lista' ? 'active' : ''}" onclick="setSubReq('req-lista')">📨 Requerimientos</button>
+            <button class="subtab-btn ${subReq === 'po-lista' ? 'active' : ''}" onclick="setSubReq('po-lista')">📦 Catálogo de P.O.</button>
+        </div>
+        <div class="subpanel ${subReq === 'req-lista' ? 'active' : ''}" id="req-lista"></div>
+        <div class="subpanel ${subReq === 'po-lista' ? 'active' : ''}" id="po-lista"></div>
+    `;
+    renderReqLista();
+    renderPOLista();
+}
+
+function setSubReq(id) {
+    subReq = id;
+    render();
+}
+
+function renderReqLista() {
+    const cont = document.getElementById("req-lista");
+    if (!cont) return;
+    cont.innerHTML = `
+        <div class="toolbar">
+            <div><b>Requerimientos</b> <span class="muted">(${DB.requerimientos.length})</span></div>
+            <button class="btn" onclick="openNewReq()">+ Nuevo Requerimiento</button>
+        </div>
+        ${DB.requerimientos.length === 0 ? '<div class="empty">Sin requerimientos capturados</div>' :
+            DB.requerimientos.map((r, i) => renderReqCard(r, i)).join("")}
+    `;
+}
+
+function renderReqCard(r, i) {
+    const totalPzas = (r.lineas || []).reduce((s, l) => s + (l.cantidad || 0), 0);
+    return `<div class="req-vista">
+        <div class="req-vista-head">
+            <h3><span class="pill warn">${r.folio}</span> ${r.cliente || "—"}</h3>
+            <button class="btn edit small" onclick="openEditReq(${i})">✎ Editar</button>
+        </div>
+        <div class="meta">
+            Fecha: <b>${r.fecha || "—"}</b> ·
+            N° P.O.: <b>${r.po || "—"}</b> ·
+            CS: <b>${r.cs || "—"}</b> ·
+            ${(r.lineas || []).length} línea(s) · ${totalPzas} pza(s)
+        </div>
+        <div class="tablewrap">
+            <table>
+                <thead><tr>
+                    <th>#</th><th>N_Parte</th><th>Descripción</th><th>Cantidad</th>
+                    <th>P.O.</th><th>Saldo P.O.</th><th>Documento</th>
+                </tr></thead>
+                <tbody>
+                    ${(r.lineas || []).map((l, li) => {
+                        const saldo = l.poId ? saldoPO(l.poId) : "—";
+                        const chipClass = typeof saldo === "number" ? (saldo === 0 ? "cero" : saldo < 50 ? "bajo" : "ok") : "";
+                        return `<tr>
+                            <td>${li + 1}</td>
+                            <td>${l.nInterno || "—"}</td>
+                            <td class="left">${l.descripcion || "—"}</td>
+                            <td>${l.cantidad || 0}</td>
+                            <td>${l.po || "—"}</td>
+                            <td>${typeof saldo === "number" ? `<span class="saldo-chip ${chipClass}">${saldo}</span>` : "—"}</td>
+                            <td>${l.tipoDoc === "factura" ? "📄 Factura" : l.tipoDoc === "remision" ? "📋 Remisión" : "—"}</td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>
+        ${r.footer && (r.footer.cumplimiento || r.footer.contacto) ? `
+            <div class="meta" style="margin-top:8px">
+                ${r.footer.cumplimiento ? `Cumplimiento: <b>${r.footer.cumplimiento}%</b>` : ""}
+                ${r.footer.contacto ? ` · Contacto: <b>${r.footer.contacto}</b>` : ""}
+            </div>
+        ` : ""}
+    </div>`;
+}
+
+function renderPOLista() {
+    const cont = document.getElementById("po-lista");
+    if (!cont) return;
+    cont.innerHTML = `
+        <div class="toolbar">
+            <div><b>Catálogo de P.O.</b> <span class="muted">(${DB.pos.length})</span></div>
+            <button class="btn" onclick="openNewPO()">+ Nueva P.O.</button>
+        </div>
+        ${DB.pos.length === 0 ? '<div class="empty">Sin P.O. capturadas</div>' : `
+            <div class="card">
+                <div class="tablewrap">
+                    <table>
+                        <thead><tr>
+                            <th>Cliente</th><th>N° P.O.</th><th>Fecha</th>
+                            <th>N_Parte</th><th>Descripción</th>
+                            <th>Pedido</th><th>Usado</th><th>Saldo</th>
+                        </tr></thead>
+                        <tbody>
+                            ${DB.pos.map(po => {
+                                const usado = DB.requerimientos.reduce((s, r) =>
+                                    s + (r.lineas || []).filter(l => l.poId === po.id).reduce((a, l) => a + (l.cantidad || 0), 0), 0
+                                );
+                                const saldo = po.cantidad - usado;
+                                const chipClass = saldo === 0 ? "cero" : saldo < 50 ? "bajo" : "ok";
+                                const ficha = todasLasFichas().find(f => f.nInterno === po.nInterno);
+                                const desc = ficha ? ficha.nombre : "—";
+                                return `<tr>
+                                    <td class="left">${po.cliente}</td>
+                                    <td>${po.numero}</td>
+                                    <td>${po.fecha}</td>
+                                    <td>${po.nInterno}</td>
+                                    <td class="left">${desc}</td>
+                                    <td>${po.cantidad}</td>
+                                    <td>${usado}</td>
+                                    <td><span class="saldo-chip ${chipClass}">${saldo}</span></td>
+                                </tr>`;
+                            }).join("")}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `}
+    `;
+}
+
+/* ================= ALMACENES ================= */
 function renderAlmacen(panel, cod) {
-    // Aplanamos todas las fichas de especificación para filtrar por almacén
     const todasFichas = [];
     DB.especificaciones.forEach(e => {
         e.grupos.forEach(g => {
@@ -268,6 +495,14 @@ document.querySelectorAll(".tab-btn").forEach(b => {
 function openModal(id) { document.getElementById(id).classList.add("open"); }
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
 function verEspecificacion(url) { if (url) window.open(url, "_blank"); }
+
+/* Cierre universal */
+document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', ev => { if (ev.target === bg) bg.classList.remove('open'); });
+});
+document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') document.querySelectorAll('.modal-bg.open').forEach(bg => bg.classList.remove('open'));
+});
 
 /* ================= PIN ================= */
 function openPin(index) {
@@ -369,7 +604,7 @@ function addComponenteGrupo(btn, data) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td class="col-chica">${tbody.children.length + 1}</td>
-        <td><input class="comp-desc" list="nombre-options" value="${data?.desc || ''}" placeholder="CAJA / REJILLA..."></td>
+        <td><input class="comp-desc" list="nombre-options" value="${data?.desc || ''}" placeholder="HSC Box"></td>
         <td class="col-med"><input class="comp-lar" type="number" step="0.1" value="${data?.lar || ''}"></td>
         <td class="col-med"><input class="comp-anc" type="number" step="0.1" value="${data?.anc || ''}"></td>
         <td class="col-med"><input class="comp-alt" type="number" step="0.1" value="${data?.alt || ''}"></td>
@@ -402,15 +637,11 @@ function actualizarGrupoCot(el) {
     const nComp = grupo.querySelectorAll('.componentes-body tr').length;
     const badge = grupo.querySelector('[data-rol="badge"]');
     if (nComp >= 2) {
-        badge.textContent = '🧩 KIT';
-        badge.className = 'tipo-badge kit';
-        grupo.classList.add('es-kit');
-        grupo.classList.remove('es-individual');
+        badge.textContent = '🧩 KIT'; badge.className = 'tipo-badge kit';
+        grupo.classList.add('es-kit'); grupo.classList.remove('es-individual');
     } else {
-        badge.textContent = '📄 INDIVIDUAL';
-        badge.className = 'tipo-badge individual';
-        grupo.classList.add('es-individual');
-        grupo.classList.remove('es-kit');
+        badge.textContent = '📄 INDIVIDUAL'; badge.className = 'tipo-badge individual';
+        grupo.classList.add('es-individual'); grupo.classList.remove('es-kit');
     }
     const suma = [...grupo.querySelectorAll('.comp-pre')].map(i => Number(i.value) || 0).reduce((a, b) => a + b, 0);
     grupo.querySelector('.suma-auto').textContent = suma.toFixed(2);
@@ -477,7 +708,6 @@ function addGrupoEsp(data, folioHeredado) {
     const cont = document.getElementById("esp_items_container");
     const div = document.createElement("div");
     div.className = "grupo-esp";
-
     div.innerHTML = `
         <div class="grupo-head">
             <span class="num">${cont.children.length + 1}</span>
@@ -487,20 +717,18 @@ function addGrupoEsp(data, folioHeredado) {
                 <button class="btn danger small" onclick="this.closest('.grupo-esp').remove(); updateItemsCount('esp');">🗑 Eliminar grupo</button>
             </div>
         </div>
-
-<div class="grupo-headers"> 
-        <label>Folio heredado
-        <select class="grupo-folio" onchange="onFolioChangeEsp(this)"></select>
-        </label>
-         <label>Cliente
-        <input class="grupo-cliente" value="${data?.cliente || ''}" placeholder="Ej. Motus León" oninput="actualizarGrupoEsp(this)">
-        </label>
-        <label>Proyecto
-        <input class="grupo-proyecto" value="${data?.proyecto || ''}" placeholder="Ej. CRV FR/AR" oninput="actualizarGrupoEsp(this)">
-    </label>
-</div>
-
-        <div class="tablewrap" style="max-height:none;overflow:visible;border:none;">
+        <div class="grupo-headers">
+            <label>Folio heredado
+                <select class="grupo-folio" onchange="onFolioChangeEsp(this)"></select>
+            </label>
+            <label>Cliente
+                <input class="grupo-cliente" value="${data?.cliente || ''}" placeholder="Ej. Motus León" oninput="actualizarGrupoEsp(this)">
+            </label>
+            <label>Proyecto
+                <input class="grupo-proyecto" value="${data?.proyecto || ''}" placeholder="Ej. CRV FR/AR" oninput="actualizarGrupoEsp(this)">
+            </label>
+        </div>
+        <div class="tablewrap">
             <table class="fichas-table">
                 <thead><tr>
                     <th class="col-num">#</th>
@@ -522,18 +750,25 @@ function addGrupoEsp(data, folioHeredado) {
         </div>
     `;
     cont.appendChild(div);
-
-    // Llenar select de folios
     const folioSel = div.querySelector('.grupo-folio');
     fillFolios(folioSel, folioHeredado || data?.folio);
-
-    // Agregar fichas
     const fichas = data?.fichas || [{}];
     fichas.forEach(f => addFichaEsp(div.querySelector('.grupo-head button'), f));
-
     actualizarGrupoEsp(div);
     updateItemsCount("esp");
+}
 
+function onFolioChangeEsp(selectEl) {
+    const grupo = selectEl.closest('.grupo-esp');
+    const folioSeleccionado = selectEl.value;
+    if (!folioSeleccionado) { actualizarGrupoEsp(selectEl); return; }
+    const cot = DB.cotizaciones.find(c => c.folio === folioSeleccionado);
+    if (!cot) { actualizarGrupoEsp(selectEl); return; }
+    const clienteInput = grupo.querySelector('.grupo-cliente');
+    const proyectoInput = grupo.querySelector('.grupo-proyecto');
+    if (!clienteInput.value.trim()) clienteInput.value = cot.cli || '';
+    if (!proyectoInput.value.trim()) proyectoInput.value = cot.pro || '';
+    actualizarGrupoEsp(selectEl);
 }
 
 function addFichaEsp(btn, data) {
@@ -566,17 +801,10 @@ function addFichaEsp(btn, data) {
         </td>
     `;
     tbody.appendChild(tr);
-
-    // Auto ECT → Corrugado
     const ectSel = tr.querySelector('.f-ect');
     const corInp = tr.querySelector('.f-cor');
     ectSel.addEventListener('change', () => { corInp.value = ECT_MAP[ectSel.value] || ''; actualizarGrupoEsp(ectSel); });
-
-    // Auto N_Interno → también hereda N_Externo para el grupo
-    const niInput = tr.querySelector('.f-ni');
-    niInput.addEventListener('input', () => actualizarGrupoEsp(niInput));
-
-    // Si tiene partes guardadas, desplegar
+    tr.querySelector('.f-ni').addEventListener('input', () => actualizarGrupoEsp(tr));
     if (data?.partes && data.partes.length) {
         setTimeout(() => {
             togglePartes(tr.querySelector('button[title="Partes A/B/C"]'));
@@ -588,17 +816,12 @@ function addFichaEsp(btn, data) {
 function togglePartes(btn) {
     const tr = btn.closest('tr');
     let next = tr.nextElementSibling;
-
-    // Si ya está abierto, lo cierra
     if (next && next.classList.contains('partes-row')) {
         next.remove();
         btn.style.background = '#fff';
         return;
     }
-
-    // Crear fila de partes
-    const ficha = tr;
-    const nExterno = ficha.querySelector('.f-ne').value || 'N';
+    const nExterno = tr.querySelector('.f-ne').value || 'N';
     const trPartes = document.createElement('tr');
     trPartes.className = 'partes-row';
     trPartes.innerHTML = `
@@ -618,11 +841,9 @@ function togglePartes(btn) {
             </div>
         </td>
     `;
-    ficha.parentNode.insertBefore(trPartes, ficha.nextSibling);
+    tr.parentNode.insertBefore(trPartes, tr.nextSibling);
     btn.style.background = '#fee2e2';
-
-    // Autoactualizar sufijos cuando cambia N_Externo
-    const neInput = ficha.querySelector('.f-ne');
+    const neInput = tr.querySelector('.f-ne');
     const upd = () => actualizarSufijosPartes(trPartes, neInput.value);
     neInput.addEventListener('input', upd);
     upd();
@@ -652,8 +873,7 @@ function addParteEsp(btn, sufijo, cantidad) {
 function actualizarSufijosPartes(trPartes, prefijo) {
     const pref = prefijo || 'N';
     trPartes.querySelectorAll('.partes-body tr').forEach(tr => {
-        const suf = tr.querySelector('.p-suf').value;
-        tr.querySelector('.p-full').value = pref + '-' + suf;
+        tr.querySelector('.p-full').value = pref + '-' + tr.querySelector('.p-suf').value;
     });
 }
 
@@ -662,11 +882,8 @@ function eliminarFichaEsp(btn) {
     const next = tr.nextElementSibling;
     if (next && next.classList.contains('partes-row')) next.remove();
     tr.remove();
-    // Renumerar
     const tbody = btn.closest('tbody');
-    tbody.querySelectorAll('.ficha-tr').forEach((r, i) => {
-        r.querySelector('.col-num').textContent = i + 1;
-    });
+    tbody.querySelectorAll('.ficha-tr').forEach((r, i) => { r.querySelector('.col-num').textContent = i + 1; });
     actualizarGrupoEsp(btn);
 }
 
@@ -676,53 +893,15 @@ function actualizarGrupoEsp(el) {
     const nFichas = grupo.querySelectorAll('.fichas-body tr.ficha-tr').length;
     const badge = grupo.querySelector('[data-rol="badge"]');
     if (nFichas >= 2) {
-        badge.textContent = '🧩 KIT';
-        badge.className = 'tipo-badge kit';
-        grupo.classList.add('es-kit');
-        grupo.classList.remove('es-individual');
+        badge.textContent = '🧩 KIT'; badge.className = 'tipo-badge kit';
+        grupo.classList.add('es-kit'); grupo.classList.remove('es-individual');
     } else {
-        badge.textContent = '📄 INDIVIDUAL';
-        badge.className = 'tipo-badge individual';
-        grupo.classList.add('es-individual');
-        grupo.classList.remove('es-kit');
+        badge.textContent = '📄 INDIVIDUAL'; badge.className = 'tipo-badge individual';
+        grupo.classList.add('es-individual'); grupo.classList.remove('es-kit');
     }
-    // Renumerar
     grupo.querySelectorAll('.fichas-body tr.ficha-tr').forEach((r, i) => {
         r.querySelector('.col-num').textContent = i + 1;
     });
-}
-
-/* Al cambiar el folio, autocompleta Cliente y Proyecto (editables) */
-function onFolioChangeEsp(selectEl) {
-    const grupo = selectEl.closest('.grupo-esp');
-    const folioSeleccionado = selectEl.value;
-
-    if (!folioSeleccionado) {
-        // No hay folio → no hacemos nada, el usuario captura manual
-        actualizarGrupoEsp(selectEl);
-        return;
-    }
-
-    // Buscar la cotización por folio
-    const cot = DB.cotizaciones.find(c => c.folio === folioSeleccionado);
-    if (!cot) {
-        actualizarGrupoEsp(selectEl);
-        return;
-    }
-
-    // Autocompletar Cliente y Proyecto
-    const clienteInput = grupo.querySelector('.grupo-cliente');
-    const proyectoInput = grupo.querySelector('.grupo-proyecto');
-
-    // Solo autocompletar si están vacíos (respetar lo que el usuario haya escrito)
-    if (!clienteInput.value.trim()) {
-        clienteInput.value = cot.cli || '';
-    }
-    if (!proyectoInput.value.trim()) {
-        proyectoInput.value = cot.pro || '';
-    }
-
-    actualizarGrupoEsp(selectEl);
 }
 
 function updateItemsCount(prefix) {
@@ -734,17 +913,15 @@ function updateItemsCount(prefix) {
 }
 
 function saveEsp() {
-const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")].map(g => {
-    const folio = g.querySelector('.grupo-folio').value;
-    const cliente = g.querySelector('.grupo-cliente').value;
-    const proyecto = g.querySelector('.grupo-proyecto').value;
-
-    const fichas = [...g.querySelectorAll('.fichas-body tr.ficha-tr')].map(tr => {
-        const f = {
-            nInterno: tr.querySelector('.f-ni').value,
-            cliente: cliente,  // ← heredado del grupo
-            nExterno: tr.querySelector('.f-ne').value,
-
+    const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")].map(g => {
+        const folio = g.querySelector('.grupo-folio').value;
+        const cliente = g.querySelector('.grupo-cliente').value;
+        const proyecto = g.querySelector('.grupo-proyecto').value;
+        const fichas = [...g.querySelectorAll('.fichas-body tr.ficha-tr')].map(tr => {
+            const f = {
+                nInterno: tr.querySelector('.f-ni').value,
+                cliente: cliente,
+                nExterno: tr.querySelector('.f-ne').value,
                 nombre: tr.querySelector('.f-nom').value,
                 largo: +tr.querySelector('.f-lar').value,
                 ancho: +tr.querySelector('.f-anc').value,
@@ -755,7 +932,6 @@ const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")]
                 codigo: tr.querySelector('.f-cod').value,
                 direccion: tr.querySelector('.f-dir').value
             };
-            // Partes (si existen)
             const next = tr.nextElementSibling;
             if (next && next.classList.contains('partes-row')) {
                 const partes = [...next.querySelectorAll('.partes-body tr')].map(p => ({
@@ -766,28 +942,252 @@ const grupos = [...document.querySelectorAll("#esp_items_container .grupo-esp")]
             }
             return f;
         }).filter(f => f.nInterno || f.nombre);
-
-        return { folio, cliente ,proyecto, fichas };
+        return { folio, cliente, proyecto, fichas };
     }).filter(g => g.fichas.length > 0);
 
-    // Validaciones
     if (grupos.length === 0) { alert("Agrega al menos 1 grupo con 1 ficha"); return; }
     for (const g of grupos) {
         if (!g.folio) { alert("Cada grupo debe tener folio heredado"); return; }
-        if (!g.cliente) {alert("Cada grupo debe tener cliente");return;}
+        if (!g.cliente) { alert("Cada grupo debe tener cliente"); return; }
         if (!g.proyecto) { alert("Cada grupo debe tener proyecto"); return; }
-
     }
 
-    const e = {
-        folio: grupos[0].folio,  // folio principal (todos comparten uno)
-        grupos
-    };
-
+    const e = { folio: grupos[0].folio, grupos };
     if (espEditIndex >= 0) DB.especificaciones[espEditIndex] = e;
     else DB.especificaciones.push(e);
     closeModal("modalEsp");
     render();
+}
+
+/* ================================================================
+   REQUERIMIENTOS
+   ================================================================ */
+function openNewReq() {
+    reqEditIndex = -1;
+    document.getElementById("req_title").textContent = "Nuevo Requerimiento";
+    const f = nextReqFolio();
+    document.getElementById("r_folio").value = f;
+    document.getElementById("r_folio_valor").textContent = f;
+    ["r_cli","r_fecha","r_po","r_cs","r_atn","r_cumplimiento","r_horario_ventana","r_contacto","r_firma_emb","r_firma_pt","r_horario_entrega"]
+        .forEach(id => document.getElementById(id).value = "");
+    document.getElementById("r_fecha").value = new Date().toISOString().slice(0,10);
+    document.getElementById("req_items_container").innerHTML = "";
+    addLineaReq();
+    updateReqCount();
+    openModal("modalReq");
+}
+
+function openEditReq(i) {
+    reqEditIndex = i;
+    const r = DB.requerimientos[i];
+    document.getElementById("req_title").textContent = "Editar Requerimiento — " + r.folio;
+    document.getElementById("r_folio").value = r.folio;
+    document.getElementById("r_folio_valor").textContent = r.folio;
+    r_cli.value = r.cliente || "";
+    r_fecha.value = r.fecha || "";
+    r_po.value = r.po || "";
+    r_cs.value = r.cs || "";
+    r_atn.value = r.atencion || "";
+    const f = r.footer || {};
+    r_cumplimiento.value = f.cumplimiento || "";
+    r_horario_ventana.value = f.horarioVentana || "";
+    r_contacto.value = f.contacto || "";
+    r_firma_emb.value = f.firmaEmb || "";
+    r_firma_pt.value = f.firmaPT || "";
+    r_horario_entrega.value = f.horarioEntrega || "";
+    const cont = document.getElementById("req_items_container");
+    cont.innerHTML = "";
+    (r.lineas || []).forEach(l => addLineaReq(l));
+    updateReqCount();
+    openModal("modalReq");
+}
+
+function onClienteReqChange() {
+    // Refrescar datalist de N_Parte por cliente en cada línea (si es necesario)
+    document.querySelectorAll('#req_items_container .linea-req').forEach(l => {
+        const sel = l.querySelector('.l-np');
+        if (sel) actualizarSelectNP(sel, val("r_cli"));
+    });
+}
+
+function actualizarSelectNP(select, cliente) {
+    const partes = nPartesDeCliente(cliente);
+    const actual = select.value;
+    select.innerHTML = `<option value="">— Seleccionar N_Parte —</option>` +
+        partes.map(f =>
+            `<option value="${f.nInterno}">${f.nInterno} — ${f.nombre}</option>`
+        ).join("");
+    if (actual) select.value = actual;
+}
+
+function addLineaReq(data) {
+    const cont = document.getElementById("req_items_container");
+    const div = document.createElement("div");
+    div.className = "linea-req";
+    div.innerHTML = `
+        <div class="linea-head">
+            <span class="num">${cont.children.length + 1}</span>
+            <div class="linea-actions">
+                <button class="btn danger small" onclick="this.closest('.linea-req').remove(); updateReqCount();">🗑 Eliminar</button>
+            </div>
+        </div>
+        <div class="linea-grid">
+            <label>N_Parte
+                <select class="l-np" onchange="onNPChangeReq(this)"></select>
+            </label>
+            <label>Cantidad
+                <input class="l-cant" type="number" min="0" value="${data?.cantidad || ''}">
+            </label>
+            <label>P.O. del cliente
+                <select class="l-po" onchange="onPOChangeReq(this)"></select>
+            </label>
+            <label>Saldo P.O.
+                <input class="l-saldo" readonly value="">
+            </label>
+            <label>Descripción
+                <input class="l-desc" value="${data?.descripcion || ''}" placeholder="Autocompleta">
+            </label>
+        </div>
+        <div class="fact-rem">
+            <span class="muted" style="margin-right:6px">Documento:</span>
+            <label><input type="radio" name="tipodoc-${cont.children.length}" value="factura" ${data?.tipoDoc === 'factura' ? 'checked' : ''}> 📄 Factura</label>
+            <label><input type="radio" name="tipodoc-${cont.children.length}" value="remision" ${data?.tipoDoc === 'remision' ? 'checked' : ''}> 📋 Remisión</label>
+        </div>
+    `;
+    cont.appendChild(div);
+    // Inicializar selects
+    const selNP = div.querySelector('.l-np');
+    actualizarSelectNP(selNP, val("r_cli"));
+    if (data?.nInterno) selNP.value = data.nInterno;
+    const selPO = div.querySelector('.l-po');
+    actualizarSelectPO(selPO, val("r_cli"), data?.poId);
+    updateReqCount();
+}
+
+function actualizarSelectPO(select, cliente, poId) {
+    const pos = posDeCliente(cliente);
+    select.innerHTML = `<option value="">— Seleccionar P.O. —</option>` +
+        pos.map(p =>
+            `<option value="${p.id}" data-numero="${p.numero}" data-np="${p.nInterno}">${p.numero} (${p.nInterno})</option>`
+        ).join("");
+    if (poId) select.value = poId;
+}
+
+function onNPChangeReq(sel) {
+    const linea = sel.closest('.linea-req');
+    const ficha = todasLasFichas().find(f => f.nInterno === sel.value);
+    if (ficha) {
+        linea.querySelector('.l-desc').value = ficha.nombre || '';
+        // Filtrar P.O.s que coincidan con el N_Parte
+        const selPO = linea.querySelector('.l-po');
+        const cliente = val("r_cli");
+        const pos = posDeCliente(cliente).filter(p => !p.nInterno || p.nInterno === ficha.nInterno);
+        selPO.innerHTML = `<option value="">— Seleccionar P.O. —</option>` +
+            pos.map(p => `<option value="${p.id}" data-numero="${p.numero}">${p.numero} (${p.nInterno})</option>`).join("");
+        actualizarSaldoLinea(linea);
+    }
+}
+
+function onPOChangeReq(sel) {
+    const linea = sel.closest('.linea-req');
+    actualizarSaldoLinea(linea);
+}
+
+function actualizarSaldoLinea(linea) {
+    const selPO = linea.querySelector('.l-po');
+    const saldoInput = linea.querySelector('.l-saldo');
+    const poId = selPO.value;
+    if (!poId) { saldoInput.value = ''; return; }
+    const saldo = saldoPO(poId);
+    saldoInput.value = saldo;
+}
+
+function updateReqCount() {
+    const n = document.querySelectorAll('#req_items_container .linea-req').length;
+    const c = document.getElementById("req_items_count");
+    if (c) c.textContent = `(${n})`;
+}
+
+function saveReq() {
+    const lineas = [...document.querySelectorAll('#req_items_container .linea-req')].map(l => {
+        const selPO = l.querySelector('.l-po');
+        const optPO = selPO.options[selPO.selectedIndex];
+        const radio = l.querySelector('input[type="radio"]:checked');
+        return {
+            nInterno: l.querySelector('.l-np').value,
+            descripcion: l.querySelector('.l-desc').value,
+            cantidad: +l.querySelector('.l-cant').value || 0,
+            poId: selPO.value,
+            po: optPO && optPO.value ? optPO.dataset.numero : "",
+            tipoDoc: radio ? radio.value : ""
+        };
+    }).filter(l => l.nInterno || l.cantidad);
+
+    const r = {
+        folio: document.getElementById("r_folio").value,
+        cliente: val("r_cli"),
+        fecha: val("r_fecha"),
+        po: val("r_po"),
+        cs: val("r_cs"),
+        atencion: val("r_atn"),
+        lineas,
+        footer: {
+            cumplimiento: val("r_cumplimiento"),
+            horarioVentana: val("r_horario_ventana"),
+            contacto: val("r_contacto"),
+            firmaEmb: val("r_firma_emb"),
+            firmaPT: val("r_firma_pt"),
+            horarioEntrega: val("r_horario_entrega")
+        }
+    };
+
+    if (!r.cliente) { alert("Cliente es obligatorio"); return; }
+    if (r.lineas.length === 0) { alert("Agrega al menos 1 línea"); return; }
+
+    if (reqEditIndex >= 0) DB.requerimientos[reqEditIndex] = r;
+    else DB.requerimientos.push(r);
+    closeModal("modalReq");
+    render();
+}
+
+/* ================================================================
+   P.O. (CATÁLOGO)
+   ================================================================ */
+function openNewPO() {
+    document.getElementById("po_title").textContent = "Nueva P.O.";
+    document.getElementById("po_cli").value = "";
+    document.getElementById("po_num").value = "";
+    document.getElementById("po_fecha").value = new Date().toISOString().slice(0,10);
+    document.getElementById("po_cant").value = "";
+    document.getElementById("po_np").innerHTML = '<option value="">— Seleccionar cliente primero —</option>';
+    openModal("modalPO");
+}
+
+function onClientePOChange() {
+    const cliente = val("po_cli");
+    const sel = document.getElementById("po_np");
+    const partes = nPartesDeCliente(cliente);
+    sel.innerHTML = `<option value="">— Seleccionar N_Parte —</option>` +
+        partes.map(f => `<option value="${f.nInterno}">${f.nInterno} — ${f.nombre}</option>`).join("");
+}
+
+function savePO() {
+    const po = {
+        id: "po-" + Date.now(),
+        cliente: val("po_cli"),
+        numero: val("po_num"),
+        fecha: val("po_fecha"),
+        nInterno: val("po_np"),
+        cantidad: +val("po_cant") || 0
+    };
+    if (!po.cliente || !po.numero || !po.cantidad) {
+        alert("Cliente, N° P.O. y Cantidad son obligatorios"); return;
+    }
+    DB.pos.push(po);
+    closeModal("modalPO");
+    render();
+    subReq = "po-lista";
+    setSubReq("po-lista");
 }
 
 /* ================= INIT ================= */
@@ -796,34 +1196,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pin) pin.addEventListener("keydown", ev => { if (ev.key === "Enter") checkPin(); });
     render();
 });
-
 if (document.readyState !== "loading") {
     const pin = document.getElementById("pin_input");
     if (pin) pin.addEventListener("keydown", ev => { if (ev.key === "Enter") checkPin(); });
     render();
 }
-
-/* ================= CIERRE UNIVERSAL DE MODALES ================= */
-
-// Cerrar al hacer clic en el fondo oscuro
-document.querySelectorAll('.modal-bg').forEach(bg => {
-    bg.addEventListener('click', (ev) => {
-        // Solo si el clic fue directamente en el fondo, no en el modal
-        if (ev.target === bg) {
-            bg.classList.remove('open');
-        }
-    });
-});
-
-// Cerrar con tecla ESC
-document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape') {
-        document.querySelectorAll('.modal-bg.open').forEach(bg => {
-            bg.classList.remove('open');
-        });
-    }
-});
-
 
 /* ================= GLOBAL ================= */
 window.openNewCot = openNewCot;
@@ -837,6 +1214,7 @@ window.saveCot = saveCot;
 window.openNewEsp = openNewEsp;
 window.openEditEsp = openEditEsp;
 window.addGrupoEsp = addGrupoEsp;
+window.onFolioChangeEsp = onFolioChangeEsp;
 window.addFichaEsp = addFichaEsp;
 window.togglePartes = togglePartes;
 window.addParteEsp = addParteEsp;
@@ -844,8 +1222,21 @@ window.eliminarFichaEsp = eliminarFichaEsp;
 window.actualizarGrupoEsp = actualizarGrupoEsp;
 window.saveEsp = saveEsp;
 
+window.openNewReq = openNewReq;
+window.openEditReq = openEditReq;
+window.onClienteReqChange = onClienteReqChange;
+window.addLineaReq = addLineaReq;
+window.onNPChangeReq = onNPChangeReq;
+window.onPOChangeReq = onPOChangeReq;
+window.saveReq = saveReq;
+window.setSubReq = setSubReq;
+
+window.openNewPO = openNewPO;
+window.onClientePOChange = onClientePOChange;
+window.savePO = savePO;
+
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.openPin = openPin;
 window.checkPin = checkPin;
-window.onFolioChangeEsp = onFolioChangeEsp;
+window.verEspecificacion = verEspecificacion;

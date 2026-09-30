@@ -930,7 +930,7 @@ footer {
 /* Encabezado del grupo: Folio + Proyecto */
 .grupo-esp .grupo-headers {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
     margin-bottom: 10px;
 }
@@ -1113,3 +1113,162 @@ footer {
     min-width: 0;
 }
 
+/* ===== REQUERIMIENTOS ===== */
+#req_items_container .linea-req {
+    display: block;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    background: #fff;
+}
+
+#req_items_container .linea-req .linea-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#req_items_container .linea-req .linea-head .num {
+    background: var(--ink);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+#req_items_container .linea-req .linea-head .linea-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+}
+
+#req_items_container .linea-req .linea-grid {
+    display: grid !important;
+    grid-template-columns: 2fr 1fr 1.5fr 1fr 1.5fr !important;
+    gap: 10px !important;
+    align-items: end;
+    margin-bottom: 10px;
+}
+
+#req_items_container .linea-req .linea-grid > label {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    font-size: 11px !important;
+    color: var(--sub) !important;
+    font-weight: normal !important;
+    text-transform: none !important;
+}
+
+#req_items_container .linea-req .linea-grid input,
+#req_items_container .linea-req .linea-grid select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-family: inherit;
+    background: #fff;
+}
+
+#req_items_container .linea-req .linea-grid input[readonly] {
+    background: #f8f9fb;
+    color: var(--sub);
+    font-weight: bold;
+}
+
+#req_items_container .linea-req .fact-rem {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 12px;
+    padding: 6px 0 2px 0;
+    border-top: 1px dashed var(--line);
+    margin-top: 8px;
+}
+
+#req_items_container .linea-req .fact-rem label {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 5px;
+    margin: 0 !important;
+    cursor: pointer;
+    font-size: 12px !important;
+    color: var(--ink) !important;
+    font-weight: normal !important;
+}
+
+#req_items_container .linea-req .fact-rem input[type="radio"] {
+    width: auto !important;
+    margin: 0;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    #req_items_container .linea-req .linea-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Vista de requerimiento guardado */
+#req-lista .req-vista {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+    background: #f8f9fb;
+}
+
+#req-lista .req-vista .req-vista-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+#req-lista .req-vista .req-vista-head h3 {
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#req-lista .req-vista .meta {
+    font-size: 12px;
+    color: var(--sub);
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+#req-lista .req-vista .meta b {
+    color: var(--ink);
+}
+
+/* Chips de saldo */
+.saldo-chip {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+.saldo-chip.ok   { background: #dcfce7; color: #166534; }
+.saldo-chip.bajo { background: #fef3c7; color: #92400e; }
+.saldo-chip.cero { background: #fee2e2; color: #9f1239; }
