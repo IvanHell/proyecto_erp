@@ -377,7 +377,7 @@ function renderReqCard(r, i) {
                         const chipClass = typeof saldo === "number" ? (saldo === 0 ? "cero" : saldo < 50 ? "bajo" : "ok") : "";
                         return `<tr>
                             <td>${li + 1}</td>
-                            <td>${l.nInterno || "—"}</td>
+                            <td>${l.nExterno || "—"}</td>
                             <td class="left">${l.descripcion || "—"}</td>
                             <td>${l.cantidad || 0}</td>
                             <td>${l.po || "—"}</td>
@@ -397,6 +397,18 @@ function renderReqCard(r, i) {
     </div>`;
 }
 
+function solicitarBorrarPO(index) {
+    openPin(index, "borrarPO");
+}
+
+function borrarPOConfirmado(index) {
+    const po = DB.pos[index];
+    if (!po) return;
+    if (!confirm(`¿Borrar la P.O. ${po.numero} del cliente ${po.cliente}?`)) return;
+    DB.pos.splice(index, 1);
+    render();
+}
+
 function renderPOLista() {
     const cont = document.getElementById("po-lista");
     if (!cont) return;
@@ -413,7 +425,7 @@ function renderPOLista() {
                             <th>Cliente</th><th>N° P.O.</th><th>Fecha</th>
                             <th>N_Parte</th><th>Descripción</th>
                             <th>Pedido</th><th>Usado</th><th>Saldo</th>
-                        </tr></thead>
+                            </tr></thead>
                         <tbody>
                             ${DB.pos.map(po => {
                                 const usado = DB.requerimientos.reduce((s, r) =>
@@ -421,17 +433,19 @@ function renderPOLista() {
                                 );
                                 const saldo = po.cantidad - usado;
                                 const chipClass = saldo === 0 ? "cero" : saldo < 50 ? "bajo" : "ok";
-                                const ficha = todasLasFichas().find(f => f.nInterno === po.nInterno);
+                                const ficha = todasLasFichas().find(f => (f.nExterno || f.nInterno) === po.nExterno || f.nInterno === po.nExterno);
                                 const desc = ficha ? ficha.nombre : "—";
-                                return `<tr>
-                                    <td class="left">${po.cliente}</td>
-                                    <td>${po.numero}</td>
-                                    <td>${po.fecha}</td>
-                                    <td>${po.nInterno}</td>
-                                    <td class="left">${desc}</td>
-                                    <td>${po.cantidad}</td>
-                                    <td>${usado}</td>
-                                    <td><span class="saldo-chip ${chipClass}">${saldo}</span></td>
+
+                               return `<tr>
+                                <td class="left">${po.cliente}</td>
+                                <td>${po.numero}</td>
+                                <td>${po.fecha}</td>
+                                <td>${po.nExterno}</td>
+                                <td class="left">${desc}</td>
+                                <td>${po.cantidad}</td>
+                                <td>${usado}</td>
+                                <td><span class="saldo-chip ${chipClass}">${saldo}</span></td>
+                                <td><button class="btn danger small" onclick="solicitarBorrarPO(${DB.pos.indexOf(po)})">🗑</button></td>
                                 </tr>`;
                             }).join("")}
                         </tbody>
@@ -505,17 +519,24 @@ document.addEventListener('keydown', ev => {
 });
 
 /* ================= PIN ================= */
-function openPin(index) {
+function openPin(index, modo = "editar") {
     espEditIndex = index;
+    document.getElementById("pin_modo").value = modo;
     document.getElementById("pin_input").value = "";
     document.getElementById("pin_error").style.display = "none";
     openModal("modalPin");
     setTimeout(() => document.getElementById("pin_input").focus(), 100);
 }
+
 function checkPin() {
     if (document.getElementById("pin_input").value === PIN_EDIT) {
         closeModal("modalPin");
-        openEditEsp(espEditIndex);
+        const modo = document.getElementById("pin_modo").value;
+        if (modo === "editar") {
+            openEditEsp(espEditIndex);
+        } else if (modo === "borrarPO") {
+            borrarPOConfirmado(espEditIndex);
+        }
     } else {
         document.getElementById("pin_error").style.display = "block";
     }
@@ -765,9 +786,11 @@ function onFolioChangeEsp(selectEl) {
     const cot = DB.cotizaciones.find(c => c.folio === folioSeleccionado);
     if (!cot) { actualizarGrupoEsp(selectEl); return; }
     const clienteInput = grupo.querySelector('.grupo-cliente');
-    const proyectoInput = grupo.querySelector('.grupo-proyecto');
-    if (!clienteInput.value.trim()) clienteInput.value = cot.cli || '';
-    if (!proyectoInput.value.trim()) proyectoInput.value = cot.pro || '';
+    // Solo autocompletar CLIENTE (el proyecto lo define el usuario)
+    if (!clienteInput.value.trim()) {
+        clienteInput.value = cot.cli || '';
+    }
+    // NO autocompletar proyecto (cot.pro es el N° de cotización, no un proyecto)
     actualizarGrupoEsp(selectEl);
 }
 
@@ -776,6 +799,8 @@ function addFichaEsp(btn, data) {
     const tbody = grupo.querySelector('.fichas-body');
     const tr = document.createElement('tr');
     tr.className = 'ficha-tr';
+    const fichaId = 'fh-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    tr.dataset.fichaId = fichaId;
     tr.innerHTML = `
         <td class="col-num">${tbody.children.length + 1}</td>
         <td class="col-chica"><input class="f-ni" value="${data?.nInterno || ''}"></td>
@@ -821,10 +846,13 @@ function togglePartes(btn) {
         btn.style.background = '#fff';
         return;
     }
+
     const nExterno = tr.querySelector('.f-ne').value || 'N';
+
     const trPartes = document.createElement('tr');
-    trPartes.className = 'partes-row';
-    trPartes.innerHTML = `
+        trPartes.className = 'partes-row';
+        trPartes.dataset.fichaId = tr.dataset.fichaId;
+        trPartes.innerHTML = `
         <td colspan="13" style="padding:0;border:none">
             <div class="partes-wrap">
                 <div class="partes-titulo">⚙ Partes de la rejilla (sufijos con N_Externo: ${nExterno})</div>
@@ -932,26 +960,27 @@ function saveEsp() {
                 codigo: tr.querySelector('.f-cod').value,
                 direccion: tr.querySelector('.f-dir').value
             };
-            const next = tr.nextElementSibling;
-            if (next && next.classList.contains('partes-row')) {
-                const partes = [...next.querySelectorAll('.partes-body tr')].map(p => ({
+            const fichaId = tr.dataset.fichaId;
+            const partesRow = g.querySelector(`.partes-row[data-ficha-id="${fichaId}"]`);
+            if (partesRow) {
+                const partes = [...partesRow.querySelectorAll('.partes-body tr')].map(p => ({
                     sufijo: p.querySelector('.p-suf').value,
                     cantidad: +p.querySelector('.p-can').value
-                })).filter(p => p.sufijo);
+                })).filter(p => p.sufijo && p.cantidad > 0);
                 if (partes.length) f.partes = partes;
             }
             return f;
         }).filter(f => f.nInterno || f.nombre);
+        
         return { folio, cliente, proyecto, fichas };
     }).filter(g => g.fichas.length > 0);
-
+    
     if (grupos.length === 0) { alert("Agrega al menos 1 grupo con 1 ficha"); return; }
     for (const g of grupos) {
         if (!g.folio) { alert("Cada grupo debe tener folio heredado"); return; }
         if (!g.cliente) { alert("Cada grupo debe tener cliente"); return; }
         if (!g.proyecto) { alert("Cada grupo debe tener proyecto"); return; }
     }
-
     const e = { folio: grupos[0].folio, grupos };
     if (espEditIndex >= 0) DB.especificaciones[espEditIndex] = e;
     else DB.especificaciones.push(e);
@@ -1014,9 +1043,9 @@ function actualizarSelectNP(select, cliente) {
     const partes = nPartesDeCliente(cliente);
     const actual = select.value;
     select.innerHTML = `<option value="">— Seleccionar N_Parte —</option>` +
-        partes.map(f =>
-            `<option value="${f.nInterno}">${f.nInterno} — ${f.nombre}</option>`
-        ).join("");
+    partes.map(f =>
+        `<option value="${f.nExterno || f.nInterno}" data-nint="${f.nInterno}">${f.nExterno || f.nInterno} — ${f.nombre}</option>`
+    ).join("");
     if (actual) select.value = actual;
 }
 
@@ -1058,7 +1087,8 @@ function addLineaReq(data) {
     // Inicializar selects
     const selNP = div.querySelector('.l-np');
     actualizarSelectNP(selNP, val("r_cli"));
-    if (data?.nInterno) selNP.value = data.nInterno;
+    if (data?.nExterno) selNP.value = data.nExterno;
+    else if (data?.nInterno) selNP.value = data.nInterno;
     const selPO = div.querySelector('.l-po');
     actualizarSelectPO(selPO, val("r_cli"), data?.poId);
     updateReqCount();
@@ -1068,24 +1098,37 @@ function actualizarSelectPO(select, cliente, poId) {
     const pos = posDeCliente(cliente);
     select.innerHTML = `<option value="">— Seleccionar P.O. —</option>` +
         pos.map(p =>
-            `<option value="${p.id}" data-numero="${p.numero}" data-np="${p.nInterno}">${p.numero} (${p.nInterno})</option>`
+            `<option value="${p.id}" data-numero="${p.numero}" data-np="${p.nE}">${p.numero} (${p.nExterno})</option>`
         ).join("");
     if (poId) select.value = poId;
 }
 
 function onNPChangeReq(sel) {
     const linea = sel.closest('.linea-req');
-    const ficha = todasLasFichas().find(f => f.nInterno === sel.value);
-    if (ficha) {
-        linea.querySelector('.l-desc').value = ficha.nombre || '';
-        // Filtrar P.O.s que coincidan con el N_Parte
-        const selPO = linea.querySelector('.l-po');
-        const cliente = val("r_cli");
-        const pos = posDeCliente(cliente).filter(p => !p.nInterno || p.nInterno === ficha.nInterno);
-        selPO.innerHTML = `<option value="">— Seleccionar P.O. —</option>` +
-            pos.map(p => `<option value="${p.id}" data-numero="${p.numero}">${p.numero} (${p.nInterno})</option>`).join("");
-        actualizarSaldoLinea(linea);
-    }
+    const ficha = todasLasFichas().find(f => 
+        (f.nExterno || f.nInterno) === sel.value || f.nInterno === sel.value
+    );
+    if (!ficha) return;
+
+    linea.querySelector('.l-desc').value = ficha.nombre || '';
+
+    const selPO = linea.querySelector('.l-po');
+    const cliente = val("r_cli");
+
+    // Filtrar P.O.s que coincidan con el N_Parte (comparando con N_Externo y N_Interno)
+    const pos = posDeCliente(cliente).filter(p => {
+        const npPO = p.nExterno || p.nInterno;
+        return !npPO || npPO === ficha.nExterno || npPO === ficha.nInterno;
+    });
+
+    // 🔧 Reconstruir el select CON data-np y mostrando N_Externo
+    selPO.innerHTML = `<option value="">— Seleccionar P.O. —</option>` +
+        pos.map(p => {
+            const np = p.nExterno || p.nInterno || "—";
+            return `<option value="${p.id}" data-numero="${p.numero}" data-np="${np}">${p.numero} (${np})</option>`;
+        }).join("");
+
+    actualizarSaldoLinea(linea);
 }
 
 function onPOChangeReq(sel) {
@@ -1113,14 +1156,17 @@ function saveReq() {
         const selPO = l.querySelector('.l-po');
         const optPO = selPO.options[selPO.selectedIndex];
         const radio = l.querySelector('input[type="radio"]:checked');
-        return {
-            nInterno: l.querySelector('.l-np').value,
-            descripcion: l.querySelector('.l-desc').value,
-            cantidad: +l.querySelector('.l-cant').value || 0,
-            poId: selPO.value,
-            po: optPO && optPO.value ? optPO.dataset.numero : "",
-            tipoDoc: radio ? radio.value : ""
-        };
+        const selNP = l.querySelector('.l-np');
+const optNP = selNP.options[selNP.selectedIndex];
+return {
+    nExterno: selNP.value,
+    nInterno: optNP?.dataset?.nint || "",
+    descripcion: l.querySelector('.l-desc').value,
+    cantidad: +l.querySelector('.l-cant').value || 0,
+    poId: selPO.value,
+    po: optPO && optPO.value ? optPO.dataset.numero : "",
+    tipoDoc: radio ? radio.value : ""
+};
     }).filter(l => l.nInterno || l.cantidad);
 
     const r = {
@@ -1168,7 +1214,7 @@ function onClientePOChange() {
     const sel = document.getElementById("po_np");
     const partes = nPartesDeCliente(cliente);
     sel.innerHTML = `<option value="">— Seleccionar N_Parte —</option>` +
-        partes.map(f => `<option value="${f.nInterno}">${f.nInterno} — ${f.nombre}</option>`).join("");
+    partes.map(f => `<option value="${f.nExterno || f.nInterno}">${f.nExterno || f.nInterno} — ${f.nombre}</option>`).join("");
 }
 
 function savePO() {
@@ -1177,7 +1223,7 @@ function savePO() {
         cliente: val("po_cli"),
         numero: val("po_num"),
         fecha: val("po_fecha"),
-        nInterno: val("po_np"),
+        nExterno: val("po_np"),
         cantidad: +val("po_cant") || 0
     };
     if (!po.cliente || !po.numero || !po.cantidad) {
@@ -1240,3 +1286,6 @@ window.closeModal = closeModal;
 window.openPin = openPin;
 window.checkPin = checkPin;
 window.verEspecificacion = verEspecificacion;
+
+window.solicitarBorrarPO = solicitarBorrarPO;
+window.borrarPOConfirmado = borrarPOConfirmado;

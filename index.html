@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Ventas — v11</title>
+    <title>Panel de Ventas — v11.5</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -176,6 +176,7 @@
 <!-- ===================== MODAL PIN ===================== -->
 <div class="modal-bg" id="modalPin">
     <div class="modal" style="max-width:360px">
+        <input type="hidden" id="pin_modo" value="editar">
         <h2>Editar Especificación</h2>
         <div class="sub">Introduce el PIN de edición</div>
         <div class="pin-box">
@@ -192,16 +193,11 @@
 </div>
 
 <datalist id="nombre-options">
-    <option value="CAJA">
+    <option value="CAJA NORMAL">
     <option value="CAJA CON FONDO">
-    <option value="HSC Box">
     <option value="REJILLA">
-    <option value="REJILLA A">
-    <option value="REJILLA B">
     <option value="SEPARADOR">
-    <option value="15 Cell Partition">
-    <option value="Common Cover">
-    <option value="TAPA">
+    <option value="TAPA TELESCOPICA">
     <option value="KIT">
 </datalist>
 
