@@ -32,7 +32,7 @@ const DB = {
             ]
         }
     ],
-    especificaciones: [
+    especificaciones: [ //formato cotizacion
         {
             folio: "FOL-0001",
             grupos: [
@@ -43,11 +43,11 @@ const DB = {
                         { nInterno: "3763224", cliente: "Motus León", nExterno: "1500820X",
                           nombre: "CAJA CON FONDO", largo: 60.5, ancho: 38, alto: 72,
                           ect: "ECT-32", corrugado: "SENCILLO", medida: "1.84",
-                          codigo: "ESP-LMT-224", direccion: "" },
+                          codigo: "ESP-LMT-224", direccion: "https://drive.google.com/open?id=1wE3e8jh1q-33mAeX0j26_sr5gcPY9Zg1&usp=drive_fs" },
                         { nInterno: "3763225", cliente: "Motus León", nExterno: "1500820X",
                           nombre: "REJILLA", largo: 59.5, ancho: 37, alto: 71.2,
                           ect: "ECT-32", corrugado: "SENCILLO", medida: "0.86",
-                          codigo: "ESP-LMT-225", direccion: "",
+                          codigo: "ESP-LMT-225", direccion: "https://drive.google.com/file/d/1kUBooXBNHb05ZfrgY5X2pWux5xaFMTHb/view?pli=1",
                           partes: [{ sufijo: "A", cantidad: 2 }, { sufijo: "B", cantidad: 4 }] }
                     ]
                 }
@@ -56,11 +56,11 @@ const DB = {
     ],
     pos: [
         { id: "po-1", cliente: "Motus León", numero: "PO-2026-001", fecha: "2026-02-20",
-          nInterno: "3763224", cantidad: 100 },
+          nExterno: "1500820X", cantidad: 100 },
         { id: "po-2", cliente: "Motus León", numero: "PO-2026-002", fecha: "2026-02-22",
-          nInterno: "3763225", cantidad: 250 }
+          nExterno: "1500820X", cantidad: 250 }
     ],
-    requerimientos: [
+    requerimientos: [ //formato de requerimientos
         {
             folio: "REQ-0001",
             cliente: "Motus León",
@@ -69,8 +69,8 @@ const DB = {
             cs: "Angela Mendoza",
             atencion: "Angela Mendoza",
             lineas: [
-                { nInterno: "3763224", descripcion: "CAJA CON FONDO", cantidad: 30,
-                  po: "PO-2026-001", tipoDoc: "remision" }
+                { nExterno: "1500820X", descripcion: "CAJA CON FONDO", cantidad: 30,
+                  po: "PO-2026-001", tipoDoc: "remision"}
             ],
             footer: {
                 cumplimiento: "",
