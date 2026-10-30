@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Ventas — v11.5</title>
+    <title>Panel de Ventas — v12</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📦</text></svg>">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <header>
-    <h1>Panel de Ventas — v11</h1>
+    <h1>Panel de Ventas — v12</h1>
     <p>Cotización · Especificación · Requerimientos · Almacenes MP / PP / PT</p>
 </header>
 
 <div class="wrap">
-
     <div class="tabs">
         <button class="tab-btn active" data-tab="cot">📥 Cotizaciones</button>
         <button class="tab-btn" data-tab="esp">📋 Especificaciones</button>
@@ -26,7 +25,6 @@
     </div>
 
     <div class="panel active" id="panel"></div>
-
 </div>
 
 <!-- ===================== MODAL COTIZACIÓN ===================== -->
@@ -34,16 +32,11 @@
     <div class="modal">
         <h2 id="cot_title">Nueva Cotización</h2>
         <div class="sub">Un folio puede contener varios grupos (Kits e Individuales)</div>
-
         <div class="folio-destacado">
-            <div>
-                <div class="label">FOLIO</div>
-                <div class="valor" id="c_folio_valor">FOL-0001</div>
-            </div>
+            <div><div class="label">FOLIO</div><div class="valor" id="c_folio_valor">FOL-0001</div></div>
             <div class="auto">Autogenerado — no editable</div>
             <input type="hidden" id="c_folio">
         </div>
-
         <div class="cot-head">
             <div class="grid">
                 <label>Cliente<input id="c_cli"></label>
@@ -51,17 +44,11 @@
                 <label>Descripción general<input id="c_desc"></label>
             </div>
         </div>
-
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
             <b style="font-size:13px">Grupos de la cotización <span class="muted" id="cot_items_count">(0)</span></b>
         </div>
-
-        <div class="selector-tipo">
-            <button onclick="addGrupoCot()">+ Nuevo Grupo</button>
-        </div>
-
+        <div class="selector-tipo"><button onclick="addGrupoCot()">+ Nuevo Grupo</button></div>
         <div id="cot_items_container"></div>
-
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalCot')">Cancelar</button>
             <button class="btn" onclick="saveCot()">Guardar Cotización</button>
@@ -74,17 +61,11 @@
     <div class="modal">
         <h2 id="esp_title">Nueva Especificación</h2>
         <div class="sub">Un grupo con 1 ficha = Individual · 2+ fichas = Kit</div>
-
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
             <b style="font-size:13px">Grupos de la especificación <span class="muted" id="esp_items_count">(0)</span></b>
         </div>
-
-        <div class="selector-tipo">
-            <button onclick="addGrupoEsp()">+ Nuevo Grupo</button>
-        </div>
-
+        <div class="selector-tipo"><button onclick="addGrupoEsp()">+ Nuevo Grupo</button></div>
         <div id="esp_items_container"></div>
-
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalEsp')">Cancelar</button>
             <button class="btn" onclick="saveEsp()">Guardar Especificación</button>
@@ -97,38 +78,25 @@
     <div class="modal">
         <h2 id="req_title">Nuevo Requerimiento</h2>
         <div class="sub">Lo que Servicio a Cliente solicita a PT</div>
-
         <div class="folio-destacado">
-            <div>
-                <div class="label">N° REQUERIMIENTO</div>
-                <div class="valor" id="r_folio_valor">REQ-0001</div>
-            </div>
+            <div><div class="label">N° REQUERIMIENTO</div><div class="valor" id="r_folio_valor">REQ-0001</div></div>
             <div class="auto">Autogenerado — no editable</div>
             <input type="hidden" id="r_folio">
         </div>
-
         <div class="cot-head">
             <div class="grid">
-                <label>Cliente
-                    <input id="r_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClienteReqChange()">
-                </label>
+                <label>Cliente <input id="r_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClienteReqChange()"></label>
                 <label>Fecha<input type="date" id="r_fecha"></label>
                 <label>N° P.O. del cliente<input id="r_po" placeholder="PO-2026-001"></label>
                 <label>Customer Service<input id="r_cs"></label>
                 <label>Atención<input id="r_atn"></label>
             </div>
         </div>
-
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
             <b style="font-size:13px">Líneas del requerimiento <span class="muted" id="req_items_count">(0)</span></b>
         </div>
-
-        <div class="selector-tipo">
-            <button onclick="addLineaReq()">+ Nueva Línea</button>
-        </div>
-
+        <div class="selector-tipo"><button onclick="addLineaReq()">+ Nueva Línea</button></div>
         <div id="req_items_container"></div>
-
         <div class="cot-head" style="margin-top:14px">
             <b style="font-size:12.5px;display:block;margin-bottom:8px">Footer informativo</b>
             <div class="grid">
@@ -140,7 +108,6 @@
                 <label>Horario de entrega<input id="r_horario_entrega"></label>
             </div>
         </div>
-
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalReq')">Cancelar</button>
             <button class="btn" onclick="saveReq()">Guardar Requerimiento</button>
@@ -153,19 +120,13 @@
     <div class="modal" style="max-width:640px">
         <h2 id="po_title">Nueva P.O.</h2>
         <div class="sub">Orden de compra del cliente</div>
-
         <div class="grid">
-            <label>Cliente
-                <input id="po_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClientePOChange()">
-            </label>
+            <label>Cliente<input id="po_cli" list="clientes-options" placeholder="Motus Arteaga" oninput="onClientePOChange()"></label>
             <label>N° P.O.<input id="po_num" placeholder="PO-2026-001"></label>
             <label>Fecha<input type="date" id="po_fecha"></label>
-            <label>N_Parte
-                <select id="po_np"></select>
-            </label>
+            <label>N_Parte<select id="po_np"></select></label>
             <label>Cantidad pedida<input type="number" id="po_cant" min="0"></label>
         </div>
-
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalPO')">Cancelar</button>
             <button class="btn" onclick="savePO()">Guardar P.O.</button>
@@ -177,17 +138,42 @@
 <div class="modal-bg" id="modalPin">
     <div class="modal" style="max-width:360px">
         <input type="hidden" id="pin_modo" value="editar">
-        <h2>Editar Especificación</h2>
-        <div class="sub">Introduce el PIN de edición</div>
+        <h2>Confirmar Acción</h2>
+        <div class="sub">Introduce el PIN</div>
         <div class="pin-box">
             <input id="pin_input" type="password" maxlength="4" placeholder="••••">
             <button class="btn" onclick="checkPin()">Validar</button>
         </div>
-        <div id="pin_error" class="muted" style="color:#dc2626;margin-top:8px;display:none">
-            PIN incorrecto
-        </div>
+        <div id="pin_error" class="muted" style="color:#dc2626;margin-top:8px;display:none">PIN incorrecto</div>
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeModal('modalPin')">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL MOVIMIENTO PT ===================== -->
+<div class="modal-bg" id="modalMov">
+    <div class="modal" style="max-width:640px">
+        <h2>Nuevo Movimiento Manual (PT)</h2>
+        <div class="sub">Entradas por producción, ajustes o mermas.</div>
+        <div class="grid">
+            <label>Tipo
+                <select id="mov_tipo" onchange="actualizarMotivosMov()">
+                    <option value="entrada">📥 Entrada</option>
+                    <option value="salida">📤 Salida</option>
+                </select>
+            </label>
+            <label>Fecha<input type="date" id="mov_fecha"></label>
+            <label>N_Parte<select id="mov_np" onchange="onNPMovChange()"></select></label>
+            <label>Descripción<input id="mov_desc" readonly></label>
+            <label>Cantidad<input type="number" id="mov_cant" min="1"></label>
+            <label>Motivo<input id="mov_motivo" list="motivos-options" placeholder="Elige o escribe"></label>
+            <label>Referencia<input id="mov_ref" placeholder="Opcional"></label>
+            <label style="grid-column:1/-1">Notas<input id="mov_notas"></label>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" onclick="closeModal('modalMov')">Cancelar</button>
+            <button class="btn" onclick="saveMov()">Guardar Movimiento</button>
         </div>
     </div>
 </div>
@@ -202,6 +188,7 @@
 </datalist>
 
 <datalist id="clientes-options"></datalist>
+<datalist id="motivos-options"></datalist>
 
 <script src="js/app.js"></script>
 </body>
